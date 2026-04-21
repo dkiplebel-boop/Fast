@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast & Nutritious | Langata Premium Dining</title>
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f4f4f5;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        @keyframes slow-zoom {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); }
+        }
+        .animate-slow-zoom {
+            animation: slow-zoom 30s infinite alternate ease-in-out;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+        .menu-grid {
+            display: grid;
+            /* Updated to 2 columns on mobile, auto-fill for larger screens */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .menu-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const MENU_DATA = {
+            platters: [
+                { id: 'p1', name: 'Slay Queen', description: '1/2 Chicken + Beef + Chips + Rice + Pilau + Salad', price: 1400, extra: 'Free 1.5L Soda' },
+                { id: 'p2', name: 'Slay King', description: '4 Sausages + 1/2 Chicken + Beef + Pilau + Chips Masala + Salad', price: 1700, extra: 'Free 1.5L Soda' },
+                { id: 'p3', name: 'The Lake & Land', description: 'Fish + Ugali + Matumbo + Pilau + Greens + Chips + Salad', price: 1800, extra: 'Free 1.5L Soda' },
+                { id: 'p4', name: 'Everything Platter', description: 'Kuku Kienyeji + Boiled Soft Corn + Boiled Eggs + Beef Sausages + Masala Chips + Salads', price: 2000, extra: 'Free 1.5L Soda' },
+            ],
+            portions: [
+                { id: 'd1', name: 'Ugali + Beef', category: 'Portion Dishes', price: 350 },
+                { id: 'd2', name: 'Rice + Beef', category: 'Portion Dishes', price: 350 },
+                { id: 'd3', name: 'Chapati + Beef', category: 'Portion Dishes', price: 350 },
+                { id: 'd4', name: 'Ugali + Matumbo', category: 'Portion Dishes', price: 250 },
+                { id: 'd5', name: 'Rice + Matumbo', category: 'Portion Dishes', price: 250 },
+                { id: 'd6', name: 'Chapati + Matumbo', category: 'Portion Dishes', price: 250 },
+                { id: 'd7', name: 'Ugali + Ndengu', category: 'Portion Dishes', price: 150 },
+                { id: 'd8', name: 'Rice + Ndengu', category: 'Portion Dishes', price: 150 },
+                { id: 'd9', name: 'Chapati + Ndengu', category: 'Portion Dishes', price: 150 },
+                { id: 'd10', name: 'Ugali + Coconut Beans', category: 'Portion Dishes', price: 170 },
+                { id: 'd11', name: 'Rice + Coconut Beans', category: 'Portion Dishes', price: 170 },
+                { id: 'd12', name: 'Chapati + Coconut Beans', category: 'Portion Dishes', price: 170 },
+                { id: 'd13', name: 'Cabbage + Chapati', category: 'Portion Dishes', price: 100 },
+                { id: 'd14', name: 'Ugali + Vegetables', category: 'Portion Dishes', price: 100 },
+                { id: 'd15', name: 'Chafua Mix: Beef + Chips', category: 'Portion Dishes', price: 400 },
+                { id: 'd16', name: 'Chafua Mix: Chicken + Chips', category: 'Portion Dishes', price: 500 },
+            ],
+            sides: [
+                { id: 's1', name: 'Plain Rice', price: 100 },
+                { id: 's2', name: 'Pilau', price: 200 },
+                { id: 's3', name: 'Ugali', price: 50 },
+                { id: 's4', name: 'Chips', price: 150 },
+                { id: 's5', name: 'Chips Masala', price: 220 },
+                { id: 's6', name: 'Lyonnaise Potatoes', price: 200 },
+                { id: 's7', name: 'Potato Wedges/Roast', price: 200 },
+                { id: 's8', name: 'Sukuma/Spinach', price: 100 },
+                { id: 's9', name: 'Kienyeji Vegetables', price: 150 },
+                { id: 's10', name: 'Cabbage', price: 80 },
+                { id: 's11', name: 'Mashed Potatoes', price: 150 },
+                { id: 's12', name: 'Mukimo', price: 150 },
+                { id: 's13', name: 'Sauteed Potatoes', price: 200 },
+            ]
+        };
+
+        const Icon = ({ name, className }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        function App() {
+            const [currentPage, setCurrentPage] = useState('home');
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
+            const [activeTab, setActiveTab] = useState('platters');
+            const WHATSAPP_NUMBER = "254783573312";
+
+            useEffect(() => {
+                window.scrollTo(0, 0);
+                lucide.createIcons();
+            }, [currentPage, activeTab, isCartOpen]);
+
+            const addToCart = (item) => {
+                setCart(prev => {
+                    const existing = prev.find(i => i.id === item.id);
+                    if (existing) {
+                        return prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i);
+                    }
+                    return [...prev, { ...item, qty: 1 }];
+                });
+            };
+
+            const removeFromCart = (id) => {
+                setCart(prev => prev.filter(i => i.id !== id));
+            };
+
+            const total = useMemo(() => cart.reduce((sum, item) => sum + (item.price * item.qty), 0), [cart]);
+
+            const handleCheckout = () => {
+                const cartList = cart.map(i => `• ${i.name} (x${i.qty}) - Ksh ${i.price * i.qty}`).join('%0A');
+                const message = `*NEW ORDER - FAST %26 NUTRITIOUS*%0A%0A${cartList}%0A%0A*Total: Ksh ${total}*%0A*Location: Langata (Bethel Business Center)*`;
+                window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+            };
+
+            const openWhatsAppContact = () => {
+                const message = "Hi! I'm reaching out from the Fast & Nutritious website. I have a question about...";
+                window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+            };
+
+            return (
+                <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
+                    {/* Navigation */}
+                    <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/5">
+                        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+                            <div className="flex flex-col cursor-pointer" onClick={() => setCurrentPage('home')}>
+                                <span className="text-lg md:text-xl font-black tracking-tighter text-orange-500 italic uppercase">FAST & NUTRITIOUS</span>
+                                <span className="text-[10px] uppercase tracking-widest text-zinc-400">Langata • Premium Dining</span>
+                            </div>
+                            <div className="hidden md:flex items-center gap-8 font-bold text-sm uppercase tracking-widest">
+                                <button onClick={() => setCurrentPage('home')} className={`transition-colors ${currentPage === 'home' ? 'text-orange-500' : 'text-zinc-400 hover:text-white'}`}>Home</button>
+                                <button onClick={() => setCurrentPage('menu')} className={`transition-colors ${currentPage === 'menu' ? 'text-orange-500' : 'text-zinc-400 hover:text-white'}`}>Menu</button>
+                                <button onClick={() => { setCurrentPage('home'); setTimeout(() => document.getElementById('contact')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="text-zinc-400 hover:text-white transition-colors">Contact</button>
+                            </div>
+                            <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <Icon name="shopping-bag" className="w-6 h-6 text-white" />
+                                {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.length}</span>}
+                            </button>
+                        </div>
+                    </nav>
+
+                    {currentPage === 'home' ? (
+                        <div>
+                            {/* Hero */}
+                            <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+                                <div className="absolute inset-0 z-0">
+                                    <div className="absolute inset-0 bg-black/60 z-10"></div>
+                                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover scale-105 animate-slow-zoom" alt="Hero" />
+                                </div>
+                                <div className="relative z-20 text-center px-6">
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold mb-8 uppercase tracking-widest backdrop-blur-md">
+                                        <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                                        Open until 3:00 AM
+                                    </div>
+                                    <h1 className="text-5xl md:text-[10rem] font-black tracking-tighter mb-8 leading-[0.8] italic uppercase">
+                                        FAST & <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-600">NUTRITIOUS</span>
+                                    </h1>
+                                    <p className="text-zinc-300 text-base md:text-xl max-w-2xl mx-auto mb-10 font-medium">Experience the pinnacle of Langata's culinary scene. Authentic nutrition, speed of service, and premium atmosphere.</p>
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6">
+                                        <button onClick={() => setCurrentPage('menu')} className="w-full sm:w-auto px-10 py-5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-full transition-all shadow-2xl uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                                            Explore Menu <Icon name="arrow-right" className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => document.getElementById('about').scrollIntoView({behavior: 'smooth'})} className="w-full sm:w-auto px-10 py-5 bg-white/10 hover:bg-white/20 text-white font-black rounded-full transition-all backdrop-blur-xl border border-white/10 uppercase tracking-widest text-sm">Our Story</button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* About Section */}
+                            <section id="about" className="py-20 md:py-32 px-6">
+                                <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="rounded-3xl overflow-hidden h-60 md:h-96 shadow-2xl">
+                                            <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="About 1" />
+                                        </div>
+                                        <div className="rounded-3xl overflow-hidden h-60 md:h-96 mt-8 md:mt-12 shadow-2xl">
+                                            <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="About 2" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl md:text-5xl font-black mb-8 italic uppercase tracking-tighter">Beyond Just <br /><span className="text-orange-500 underline decoration-zinc-800 underline-offset-8 uppercase">Fast Food</span></h2>
+                                        <p className="text-zinc-400 text-base md:text-lg mb-8 leading-relaxed">Located in the heart of Langata at Bethel Business Center, Fast & Nutritious was born from a simple vision: to provide high-quality, nutritious meals without compromising on speed or flavor.</p>
+                                        <div className="grid grid-cols-2 gap-8">
+                                            <div><h4 className="text-2xl md:text-3xl font-black text-white mb-2 italic">100%</h4><p className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Fresh Ingredients</p></div>
+                                            <div><h4 className="text-2xl md:text-3xl font-black text-white mb-2 italic">24/7</h4><p className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Dedication</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Service Ticks */}
+                            <section className="py-20 bg-zinc-950/50 px-6">
+                                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+                                    {[
+                                        { title: 'Service Options', items: ['Outdoor seating', 'Dine-in', 'Delivery', 'Takeaway'], icon: 'utensils' },
+                                        { title: 'Popular For', items: ['Lunch', 'Dinner', 'Solo dining'], icon: 'star' },
+                                        { title: 'Offerings', items: ['Coffee', 'Small plates', 'Quick bite'], icon: 'coffee' }
+                                    ].map((block, idx) => (
+                                        <div key={idx} className="p-8 md:p-10 bg-zinc-900 border border-white/5 rounded-3xl group hover:border-orange-500/20 transition-all">
+                                            <div className="mb-6 md:mb-8 p-4 bg-orange-500/5 rounded-2xl inline-block transition-transform group-hover:scale-110">
+                                                <Icon name={block.icon} className="w-6 h-6 text-orange-500" />
+                                            </div>
+                                            <h4 className="text-lg md:text-xl font-black italic uppercase tracking-tighter mb-6 md:mb-8">{block.title}</h4>
+                                            <ul className="space-y-4 md:space-y-5">
+                                                {block.items.map((item, i) => (
+                                                    <li key={i} className="flex items-center gap-4 text-zinc-400 text-xs md:text-sm font-bold tracking-wide">
+                                                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                                            <Icon name="check" className="w-3 h-3 text-emerald-500" />
+                                                        </div>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Contact Section */}
+                            <section id="contact" className="py-24 md:py-32 px-6">
+                                <div className="max-w-4xl mx-auto text-center">
+                                    <h2 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter mb-8">Ready to <span className="text-orange-500">Connect?</span></h2>
+                                    <p className="text-zinc-400 text-base md:text-lg mb-12 max-w-xl mx-auto leading-relaxed">Contact us today for menu inquiries, reservations, or catering needs.</p>
+                                    <button onClick={openWhatsAppContact} className="mx-auto group p-8 md:p-10 bg-zinc-900 border border-white/10 rounded-[2rem] md:rounded-[2.5rem] flex flex-col items-center hover:border-emerald-500/50 transition-all active:scale-[0.98] shadow-2xl">
+                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-500/10 rounded-[1.2rem] md:rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                            <Icon name="message-circle" className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+                                        </div>
+                                        <span className="text-xl md:text-2xl font-black italic uppercase tracking-tight mb-2">WhatsApp Us</span>
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Instant Support Available</span>
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
+                    ) : (
+                        <div className="pt-28 md:pt-32 pb-20">
+                            <div className="max-w-7xl mx-auto px-4 md:px-6 mb-12 md:mb-16">
+                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
+                                    <div>
+                                        <div onClick={() => setCurrentPage('home')} className="inline-flex items-center gap-2 text-zinc-400 hover:text-orange-500 cursor-pointer mb-4 font-black text-[10px] uppercase tracking-widest">
+                                            <Icon name="x" className="w-4 h-4 rotate-45" /> Back to Home
+                                        </div>
+                                        <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter">The Menu</h1>
+                                        <p className="text-zinc-500 mt-2 text-sm max-w-md">Portion dishes and signature platters.</p>
+                                    </div>
+                                    <div className="flex bg-zinc-900 p-1.5 rounded-2xl border border-white/5 shadow-2xl overflow-x-auto">
+                                        {['platters', 'portions', 'sides'].map(tab => (
+                                            <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap px-6 md:px-8 py-3 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}>{tab}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="max-w-7xl mx-auto px-4 md:px-6 menu-grid">
+                                {MENU_DATA[activeTab].map(item => (
+                                    <div key={item.id} className="group relative p-4 md:p-8 bg-zinc-900/40 border border-white/5 rounded-[1.5rem] md:rounded-[2rem] hover:border-orange-500/40 transition-all flex flex-col hover:shadow-2xl overflow-hidden">
+                                        {item.extra && <div className="absolute -top-3 left-4 md:left-8 px-3 md:px-4 py-1.5 bg-orange-600 text-white text-[8px] md:text-[10px] font-black uppercase tracking-widest rounded-full z-10 whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%]">{item.extra}</div>}
+                                        <h3 className="text-base md:text-2xl font-black mb-2 md:mb-3 italic tracking-tight group-hover:text-orange-500 transition-colors uppercase leading-tight mt-2">{item.name}</h3>
+                                        <p className="text-[10px] md:text-sm text-zinc-500 mb-6 md:mb-8 leading-relaxed flex-1 line-clamp-3 md:line-clamp-none">{item.description || 'Nutritious and delicious dish prepared fresh daily.'}</p>
+                                        <div className="flex items-center justify-between pt-4 md:pt-6 border-t border-white/5 mt-auto">
+                                            <span className="text-sm md:text-2xl font-black text-white italic">Ksh {item.price}</span>
+                                            <button onClick={() => addToCart(item)} className="w-10 h-10 md:w-14 md:h-14 bg-white hover:bg-orange-600 text-black hover:text-white rounded-xl md:rounded-2xl transition-all hover:scale-110 flex items-center justify-center shadow-lg">
+                                                <Icon name="shopping-bag" className="w-4 h-4 md:w-6 md:h-6" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Cart Drawer */}
+                    {isCartOpen && (
+                        <React.Fragment>
+                            <div onClick={() => setIsCartOpen(false)} className="fixed inset-0 bg-black/90 backdrop-blur-md z-"></div>
+                            <div className="fixed top-0 right-0 h-full w-full max-w-md bg-zinc-950 border-l border-white/5 z- flex flex-col animate-in slide-in-from-right duration-300">
+                                <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between">
+                                    <div><h2 className="text-xl md:text-2xl font-black italic uppercase">Your Box</h2><p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Fast & Nutritious Order</p></div>
+                                    <button onClick={() => setIsCartOpen(false)} className="p-3 bg-zinc-900 rounded-2xl"><Icon name="x" className="w-6 h-6" /></button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+                                    {cart.length === 0 ? <p className="text-center text-zinc-600 font-bold uppercase italic mt-10">Your box is empty</p> :
+                                    cart.map(item => (
+                                        <div key={item.id} className="flex justify-between">
+                                            <div><h4 className="font-black italic uppercase text-sm md:text-base">{item.name}</h4><span className="text-[10px] md:text-xs text-zinc-500">{`${item.qty} x Ksh ${item.price}`}</span></div>
+                                            <div className="text-right">
+                                                <p className="font-black text-orange-500 italic text-sm md:text-base">Ksh {item.price * item.qty}</p>
+                                                <button onClick={() => removeFromCart(item.id)} className="text-[10px] uppercase font-black text-zinc-700">Remove</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="p-6 md:p-8 border-t border-white/5 bg-zinc-900/30">
+                                    <div className="flex justify-between items-end mb-8">
+                                        <span className="text-zinc-600 uppercase font-black text-[10px]">Total</span>
+                                        <span className="text-3xl md:text-4xl font-black italic">Ksh {total}</span>
+                                    </div>
+                                    <button disabled={cart.length === 0} onClick={handleCheckout} className="w-full py-5 md:py-6 bg-orange-600 text-white font-black rounded-2xl shadow-2xl uppercase text-sm italic active:scale-95 transition-all">Checkout on WhatsApp</button>
+                                </div>
+                            </div>
+                        </React.Fragment>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="py-20 border-t border-white/5 bg-black">
+                        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
+                            <div>
+                                <span className="text-xl md:text-2xl font-black text-orange-500 italic uppercase">FAST & NUTRITIOUS</span>
+                                <p className="text-zinc-600 text-[10px] font-black uppercase mt-4">© 2026 Langata branch</p>
+                            </div>
+                            <div>
+                                <h5 className="text-[10px] uppercase font-black text-zinc-500 mb-4 md:mb-6 flex items-center justify-center md:justify-start gap-2">
+                                    <Icon name="phone" className="w-3 h-3" /> Contact
+                                </h5>
+                                <p className="text-sm text-zinc-400 font-bold">0783 573312</p>
+                            </div>
+                            <div>
+                                <h5 className="text-[10px] uppercase font-black text-zinc-500 mb-4 md:mb-6 flex items-center justify-center md:justify-start gap-2">
+                                    <Icon name="map-pin" className="w-3 h-3" /> Visit
+                                </h5>
+                                <p className="text-sm text-zinc-400 font-bold">Bethel Business Center, Langata</p>
+                            </div>
+                            <div>
+                                <h5 className="text-[10px] uppercase font-black text-zinc-500 mb-4 md:mb-6 flex items-center justify-center md:justify-start gap-2">
+                                    <Icon name="clock" className="w-3 h-3" /> Hours
+                                </h5>
+                                <p className="text-sm text-zinc-400 font-bold">08:00 AM — 03:00 AM</p>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
