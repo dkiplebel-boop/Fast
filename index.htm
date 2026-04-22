@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fast & Nutritious | Langata Premium Dining</title>
-    <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -42,7 +41,6 @@
         }
         .menu-grid {
             display: grid;
-            /* Updated to 2 columns on mobile, auto-fill for larger screens */
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
@@ -51,6 +49,31 @@
                 grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
                 gap: 2rem;
             }
+        }
+
+        @keyframes fly-to-cart {
+            0% { transform: scale(1); opacity: 1; top: var(--start-y); left: var(--start-x); }
+            100% { transform: scale(0.2); opacity: 0; top: 20px; left: calc(100% - 60px); }
+        }
+
+        .fly-item {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            background: #ea580c;
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+            animation: fly-to-cart 0.8s ease-in-out forwards;
+        }
+
+        @keyframes cart-bounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .cart-animate {
+            animation: cart-bounce 0.3s ease-in-out;
         }
     </style>
 </head>
@@ -62,10 +85,10 @@
 
         const MENU_DATA = {
             platters: [
-                { id: 'p1', name: 'Slay Queen', description: '1/2 Chicken + Beef + Chips + Rice + Pilau + Salad', price: 1400 },
-                { id: 'p2', name: 'Slay King', description: '4 Sausages + 1/2 Chicken + Beef + Pilau + Chips Masala + Salad', price: 1700  },
-                { id: 'p3', name: 'The Lake & Land', description: 'Fish + Ugali + Matumbo + Pilau + Greens + Chips + Salad', price: 1800 },
-                { id: 'p4', name: 'Everything Platter', description: 'Kuku Kienyeji + Boiled Soft Corn + Boiled Eggs + Beef Sausages + Masala Chips + Salads', price: 2000 },
+                { id: 'p1', name: 'Slay Queen', description: '1/2 Chicken + Beef + Chips + Rice + Pilau + Salad + 1.5 liter free soda', price: 1400 },
+                { id: 'p2', name: 'Slay King', description: '4 Sausages + 1/2 Chicken + Beef + Pilau + Chips Masala + Salad + 1.5 liter free soda', price: 1700  },
+                { id: 'p3', name: 'The Lake & Land', description: 'Fish + Ugali + Matumbo + Pilau + Greens + Chips + Salad + 1.5 liter free soda', price: 1800 },
+                { id: 'p4', name: 'Everything Platter', description: 'Kuku Kienyeji + Boiled Soft Corn + Boiled Eggs + Beef Sausages + Masala Chips + Salads + 1.5 liter free soda', price: 2000 },
             ],
             portions: [
                 { id: 'd1', name: 'Ugali + Beef', category: 'Portion Dishes', price: 350 },
@@ -113,6 +136,7 @@
             const [currentPage, setCurrentPage] = useState('home');
             const [cart, setCart] = useState([]);
             const [isCartOpen, setIsCartOpen] = useState(false);
+            const [flyItems, setFlyItems] = useState([]);
             const [activeTab, setActiveTab] = useState('platters');
             const WHATSAPP_NUMBER = "254783573312";
 
@@ -121,7 +145,14 @@
                 lucide.createIcons();
             }, [currentPage, activeTab, isCartOpen]);
 
-            const addToCart = (item) => {
+            const addToCart = (item, event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                const newFlyItem = { id: Date.now(), x: rect.left, y: rect.top };
+                setFlyItems(prev => [...prev, newFlyItem]);
+                setTimeout(() => {
+                    setFlyItems(prev => prev.filter(f => f.id !== newFlyItem.id));
+                }, 800);
+
                 setCart(prev => {
                     const existing = prev.find(i => i.id === item.id);
                     if (existing) {
@@ -150,8 +181,11 @@
 
             return (
                 <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-                    {/* Navigation */}
-                    <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/5">
+                    {flyItems.map(item => (
+                        <div key={item.id} className="fly-item" style={{ '--start-x': `${item.x}px`, '--start-y': `${item.y}px` }}></div>
+                    ))}
+              
+                    <nav className={`fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/5 transition-opacity duration-300 ${isCartOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
                             <div className="flex flex-col cursor-pointer" onClick={() => setCurrentPage('home')}>
                                 <span className="text-lg md:text-xl font-black tracking-tighter text-orange-500 italic uppercase">FAST & NUTRITIOUS</span>
@@ -162,7 +196,7 @@
                                 <button onClick={() => setCurrentPage('menu')} className={`transition-colors ${currentPage === 'menu' ? 'text-orange-500' : 'text-zinc-400 hover:text-white'}`}>Menu</button>
                                 <button onClick={() => { setCurrentPage('home'); setTimeout(() => document.getElementById('contact')?.scrollIntoView({behavior: 'smooth'}), 100); }} className="text-zinc-400 hover:text-white transition-colors">Contact</button>
                             </div>
-                            <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <button onClick={() => setIsCartOpen(true)} className={`relative p-2 hover:bg-white/10 rounded-full transition-all ${flyItems.length > 0 ? 'cart-animate' : ''}`}>
                                 <Icon name="shopping-bag" className="w-6 h-6 text-white" />
                                 {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.length}</span>}
                             </button>
@@ -171,7 +205,6 @@
 
                     {currentPage === 'home' ? (
                         <div>
-                            {/* Hero */}
                             <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
                                 <div className="absolute inset-0 z-0">
                                     <div className="absolute inset-0 bg-black/60 z-10"></div>
@@ -195,7 +228,6 @@
                                 </div>
                             </section>
 
-                            {/* About Section */}
                             <section id="about" className="py-20 md:py-32 px-6">
                                 <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
                                     <div className="grid grid-cols-2 gap-4">
@@ -217,7 +249,6 @@
                                 </div>
                             </section>
 
-                            {/* Service Ticks */}
                             <section className="py-20 bg-zinc-950/50 px-6">
                                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
                                     {[
@@ -245,7 +276,6 @@
                                 </div>
                             </section>
 
-                            {/* Contact Section */}
                             <section id="contact" className="py-24 md:py-32 px-6">
                                 <div className="max-w-4xl mx-auto text-center">
                                     <h2 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter mb-8">Ready to <span className="text-orange-500">Connect?</span></h2>
@@ -281,12 +311,11 @@
                             <div className="max-w-7xl mx-auto px-4 md:px-6 menu-grid">
                                 {MENU_DATA[activeTab].map(item => (
                                     <div key={item.id} className="group relative p-4 md:p-8 bg-zinc-900/40 border border-white/5 rounded-[1.5rem] md:rounded-[2rem] hover:border-orange-500/40 transition-all flex flex-col hover:shadow-2xl overflow-hidden">
-                                        {item.extra && <div className="absolute -top-3 left-4 md:left-8 px-3 md:px-4 py-1.5 bg-orange-600 text-white text-[8px] md:text-[10px] font-black uppercase tracking-widest rounded-full z-10 whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%]">{item.extra}</div>}
                                         <h3 className="text-base md:text-2xl font-black mb-2 md:mb-3 italic tracking-tight group-hover:text-orange-500 transition-colors uppercase leading-tight mt-2">{item.name}</h3>
                                         <p className="text-[10px] md:text-sm text-zinc-500 mb-6 md:mb-8 leading-relaxed flex-1 line-clamp-3 md:line-clamp-none">{item.description || 'Nutritious and delicious dish prepared fresh daily.'}</p>
                                         <div className="flex items-center justify-between pt-4 md:pt-6 border-t border-white/5 mt-auto">
                                             <span className="text-sm md:text-2xl font-black text-white italic">Ksh {item.price}</span>
-                                            <button onClick={() => addToCart(item)} className="w-10 h-10 md:w-14 md:h-14 bg-white hover:bg-orange-600 text-black hover:text-white rounded-xl md:rounded-2xl transition-all hover:scale-110 flex items-center justify-center shadow-lg">
+                                            <button onClick={(e) => addToCart(item, e)} className="w-10 h-10 md:w-14 md:h-14 bg-white hover:bg-orange-600 text-black hover:text-white rounded-xl md:rounded-2xl transition-all hover:scale-110 flex items-center justify-center shadow-lg">
                                                 <Icon name="shopping-bag" className="w-4 h-4 md:w-6 md:h-6" />
                                             </button>
                                         </div>
@@ -296,14 +325,18 @@
                         </div>
                     )}
 
-                    {/* Cart Drawer */}
                     {isCartOpen && (
                         <React.Fragment>
                             <div onClick={() => setIsCartOpen(false)} className="fixed inset-0 bg-black/90 backdrop-blur-md z-"></div>
                             <div className="fixed top-0 right-0 h-full w-full max-w-md bg-zinc-950 border-l border-white/5 z- flex flex-col animate-in slide-in-from-right duration-300">
                                 <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between">
-                                    <div><h2 className="text-xl md:text-2xl font-black italic uppercase">Your Box</h2><p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Fast & Nutritious Order</p></div>
-                                    <button onClick={() => setIsCartOpen(false)} className="p-3 bg-zinc-900 rounded-2xl"><Icon name="x" className="w-6 h-6" /></button>
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-black italic uppercase">Your Box</h2>
+                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Fast & Nutritious Order</p>
+                                    </div>
+                                    <button onClick={() => setIsCartOpen(false)} className="p-3 bg-zinc-900 hover:bg-zinc-800 rounded-2xl text-white transition-colors">
+                                        <Icon name="x" className="w-6 h-6" />
+                                    </button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
                                     {cart.length === 0 ? <p className="text-center text-zinc-600 font-bold uppercase italic mt-10">Your box is empty</p> :
@@ -328,7 +361,6 @@
                         </React.Fragment>
                     )}
 
-                    {/* Footer */}
                     <footer className="py-20 border-t border-white/5 bg-black">
                         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
                             <div>
